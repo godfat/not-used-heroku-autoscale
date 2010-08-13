@@ -37,6 +37,15 @@ describe Heroku::Autoscale do
         :min_frequency   => 10
     end
 
+    it 'wont blow' do
+      response = []
+      app.instance_variable_set('@app', lambda{|env|response << 'ok'})
+      mock(app).autoscale({}){ raise 'boom' }
+
+      lambda{app.call({})}.should raise_error('boom')
+      response.should == ['ok']
+    end
+
     it "scales up" do
       heroku = mock(Heroku::Client)
       heroku.info("test_app_name") { { :dynos => 1 } }
