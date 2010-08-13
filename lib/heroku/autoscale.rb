@@ -23,6 +23,7 @@ module Heroku
         autoscale(env)
       end
 
+    ensure
       app.call(env)
     end
 
