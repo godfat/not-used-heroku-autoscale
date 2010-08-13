@@ -10,8 +10,7 @@ describe Heroku::Autoscale do
   end
 
   def must_supply option
-    mock(logger = Object.new).warn(/Must supply :#{option}/)
-    Heroku::Autoscale.new(noop).call('rack.logger' => logger)
+    lambda{Heroku::Autoscale.new(noop).call({})}.should raise_error(/Must supply :#{option}/)
   end
 
   describe "option validation" do
