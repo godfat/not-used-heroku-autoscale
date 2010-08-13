@@ -9,17 +9,22 @@ describe Heroku::Autoscale do
     lambda {|env|}
   end
 
+  def must_supply option
+    mock(logger = Object.new).warn(/Must supply :#{option}/)
+    Heroku::Autoscale.new(noop).call('rack.logger' => logger)
+  end
+
   describe "option validation" do
     it "requires username" do
-      lambda { Heroku::Autoscale.new(noop) }.should raise_error(/Must supply :username/)
+      must_supply('username')
     end
 
     it "requires password" do
-      lambda { Heroku::Autoscale.new(noop) }.should raise_error(/Must supply :password/)
+      must_supply('password')
     end
 
     it "requires app_name" do
-      lambda { Heroku::Autoscale.new(noop) }.should raise_error(/Must supply :app_name/)
+      must_supply('app_name')
     end
   end
 

@@ -13,10 +13,11 @@ module Heroku
       @app = app
       @options = default_options.merge(options)
       @last_scaled = Time.now - 60
-      check_options!
     end
 
     def call(env)
+      check_options!(env)
+
       if options[:defer]
         EventMachine.defer { autoscale(env) }
       else
@@ -45,12 +46,16 @@ private ######################################################################
       set_dynos(dynos) if dynos != original_dynos
     end
 
-    def check_options!
+    def check_options! env
       errors = []
       errors << "Must supply :username to Heroku::Autoscale" unless options[:username]
       errors << "Must supply :password to Heroku::Autoscale" unless options[:password]
       errors << "Must supply :app_name to Heroku::Autoscale" unless options[:app_name]
-      raise errors.join(" / ") unless errors.empty?
+
+      if !errors.empty? && env['rack.logger']
+        env['rack.logger'].warn(
+          "Skip Heroku::Autoscale because: #{errors.join(" / ")}")
+      end
     end
 
     def current_dynos
