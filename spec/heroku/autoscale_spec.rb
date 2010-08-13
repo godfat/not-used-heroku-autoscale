@@ -6,7 +6,7 @@ describe Heroku::Autoscale do
   include Rack::Test::Methods
 
   def noop
-    lambda {}
+    lambda {|env|}
   end
 
   describe "option validation" do
