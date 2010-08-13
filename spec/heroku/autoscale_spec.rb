@@ -6,7 +6,7 @@ describe Heroku::Autoscale do
   include Rack::Test::Methods
 
   def noop
-    lambda {|env|}
+    lambda {|env| 'ok'}
   end
 
   describe "option validation" do
@@ -38,11 +38,10 @@ describe Heroku::Autoscale do
     end
 
     it 'wont blow' do
-      mock(inner = Object.new).call({})
-      mock(app).app{ inner }
-      mock(app).autoscale({}){ raise 'boom' }
+      mock(app).current_dynos{ raise 'boom' }
+      mock(logger = Object.new).send('error', 'ERROR: Heroku::Autoscale: boom')
 
-      lambda{app.call({})}.should raise_error('boom')
+      app.call({'rack.logger' => logger}).should == 'ok'
     end
 
     it "scales up" do

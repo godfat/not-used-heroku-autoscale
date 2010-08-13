@@ -1,3 +1,4 @@
+
 require "eventmachine"
 require "heroku"
 require "rack"
@@ -24,7 +25,7 @@ module Heroku
       end
 
     ensure
-      app.call(env)
+      return app.call(env)
     end
 
 private ######################################################################
@@ -43,7 +44,10 @@ private ######################################################################
       dynos = options[:max_dynos] if dynos > options[:max_dynos]
       dynos = 1 if dynos < 1
 
-      set_dynos(dynos) if dynos != original_dynos
+      set_dynos(env, dynos) if dynos != original_dynos
+
+    rescue Exception => e
+      log(env, 'error', e)
     end
 
     def check_options!
@@ -77,10 +81,17 @@ private ######################################################################
       env["HTTP_X_HEROKU_QUEUE_WAIT_TIME"].to_i
     end
 
-    def set_dynos(count)
+    def set_dynos(env, count)
+      log(env, 'warn', "set dynos to #{count}")
+
       heroku.set_dynos(options[:app_name], count)
       @last_scaled = Time.now
     end
 
+    def log env, kind, string
+      return unless env['rack.logger']
+      env['rack.logger'].send(
+        kind, "#{kind.upcase}: Heroku::Autoscale: #{string}")
+    end
   end
 end
