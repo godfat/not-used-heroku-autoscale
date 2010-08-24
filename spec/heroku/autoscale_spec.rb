@@ -25,6 +25,8 @@ describe Heroku::Autoscale do
 
   describe "with valid options" do
     let(:app) do
+      frequency = 10
+      mock(Random).rand(60).once{ -frequency*2 }
       Heroku::Autoscale.new noop,
         :defer => false,
         :username => "test_username",
@@ -33,7 +35,8 @@ describe Heroku::Autoscale do
         :min_dynos       => 1,
         :max_dynos       => 10,
         :queue_wait_low  => 10,
-        :queue_wait_high => 100
+        :queue_wait_high => 100,
+        :min_frequency   => frequency
     end
 
     it 'wont blow' do

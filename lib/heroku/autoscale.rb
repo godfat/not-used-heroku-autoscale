@@ -3,17 +3,25 @@ require "eventmachine"
 require "heroku"
 require "rack"
 
+class Random
+  def self.rand n
+    rand(n)
+  end
+end unless defined?(Random)
+
 module Heroku
   class Autoscale
 
     VERSION = "0.2.2"
 
-    attr_reader :app, :options, :last_scaled
+    attr_reader :app, :options, :last_accumulated
 
     def initialize(app, options={})
       @app = app
       @options = default_options.merge(options)
       @accumulator = 0
+      # rand is here to make race condition less likely to happen
+      @last_accumulated = Time.now + Random.rand(60)
       check_options!
     end
 
@@ -32,8 +40,10 @@ private ######################################################################
 
     def autoscale(env)
       # dont do anything if we scaled too frequently ago
-      wait = queue_wait(env)
+      return if (Time.now - last_accumulated) < options[:min_frequency]
+      @last_accumulated = Time.now
 
+      wait = queue_wait(env)
       @accumulator += wait
       @accumulator = (0.99 * @accumulator).floor
 
