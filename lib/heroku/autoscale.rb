@@ -5,7 +5,7 @@ require "rack"
 
 class Random
   def self.rand n
-    rand(n)
+    super(n)
   end
 end unless defined?(Random)
 
