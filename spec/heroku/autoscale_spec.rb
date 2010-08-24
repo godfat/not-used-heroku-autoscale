@@ -89,7 +89,7 @@ describe Heroku::Autoscale do
       app.call({ "HTTP_X_HEROKU_QUEUE_WAIT_TIME" => 9 })
     end
 
-    it "doesnt flap" do
+    it "doesn't flap" do
       heroku = mock(Heroku::Client)
       heroku.info("test_app_name").once { { :dynos => 5 } }
       heroku.set_dynos.with_any_args.once
