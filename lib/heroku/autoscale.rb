@@ -13,7 +13,7 @@ module Heroku
     def initialize(app, options={})
       @app = app
       @options = default_options.merge(options)
-      @last_scaled = Time.now - 60
+      @accumulator = 0
       check_options!
     end
 
@@ -32,19 +32,29 @@ private ######################################################################
 
     def autoscale(env)
       # dont do anything if we scaled too frequently ago
-      return if (Time.now - last_scaled) < options[:min_frequency]
-
-      original_dynos = dynos = current_dynos
       wait = queue_wait(env)
 
-      dynos -= 1 if wait <= options[:queue_wait_low]
-      dynos += 1 if wait >= options[:queue_wait_high]
+      @accumulator += wait
+      @accumulator = (0.99 * @accumulator).floor
+
+      if            wait >= options[:queue_wait_high]
+        dynos = current_dynos + 1
+
+
+      elsif         wait <= options[:queue_wait_low] &&
+            @accumulator <= options[:queue_wait_low]
+
+        dynos = current_dynos - 1
+
+      else
+        return
+      end
 
       dynos = options[:min_dynos] if dynos < options[:min_dynos]
       dynos = options[:max_dynos] if dynos > options[:max_dynos]
       dynos = 1 if dynos < 1
 
-      set_dynos(env, dynos) if dynos != original_dynos
+      set_dynos(env, dynos)
 
     rescue Exception => e
       log(env, 'error', e)
@@ -85,7 +95,6 @@ private ######################################################################
       log(env, 'warn', "set dynos to #{count}")
 
       heroku.set_dynos(options[:app_name], count)
-      @last_scaled = Time.now
     end
 
     def log env, kind, string

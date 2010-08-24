@@ -33,8 +33,7 @@ describe Heroku::Autoscale do
         :min_dynos       => 1,
         :max_dynos       => 10,
         :queue_wait_low  => 10,
-        :queue_wait_high => 100,
-        :min_frequency   => 10
+        :queue_wait_high => 100
     end
 
     it 'wont blow' do
